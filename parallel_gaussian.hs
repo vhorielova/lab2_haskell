@@ -10,7 +10,6 @@ gaussianElimination :: Matrix -> Vector -> (Matrix, Vector)
 gaussianElimination mat vec = go 0 mat vec
   where
     n = length mat
-    
     go k a b
       | k >= n = (a, b)
       | otherwise =
@@ -80,15 +79,22 @@ swapElems i j xs =
   in take i xs ++ [ej] ++ take (j - i - 1) (drop (i + 1) xs) ++ 
      [ei] ++ drop (j + 1) xs
 
+readMatrix :: FilePath -> IO (Matrix, Vector)
+readMatrix path = do
+  content <- readFile path
+  let (nStr:rows) = lines content
+      n = read nStr :: Int
+      parsed = map (map read . words) rows :: [[Double]]
+      a = map init parsed
+      b = map last parsed
+  return (a, b)
+
 main :: IO ()
 main = do
   args <- getArgs
   let size = if null args then 4 else read (head args) :: Int
 
-  let mat = [[1, 1, -1],
-             [4, -3, 1],
-             [2, 1, -1]] :: Matrix
-      vec = [-2, 1, 1] :: Vector
+  (mat, vec) <- readMatrix "input_matrix.txt"
   
   putStrLn "Solving system Ax = b"
   putStrLn "Matrix A:"
