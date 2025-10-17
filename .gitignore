@@ -1,2 +1,5 @@
 .DS-Store
 .ghc.*
+parallel_gaussian
+*.hi
+*.o
