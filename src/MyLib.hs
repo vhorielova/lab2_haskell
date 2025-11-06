@@ -1,15 +1,14 @@
 module MyLib where
 
-import Control.Parallel.Strategies
-import Control.DeepSeq
+import Control.Parallel.Strategies    
 import Data.List (foldl')
-import System.Environment (getArgs)
+import System.Random (randomRIO)
 
 type Matrix = [[Double]]
 type Vector = [Double]
 
-gaussianElimination :: Matrix -> Vector -> (Matrix, Vector)
-gaussianElimination mat vec = go 0 mat vec
+gaussianEliminationPar :: Matrix -> Vector -> (Matrix, Vector)
+gaussianEliminationPar mat vec = go 0 mat vec
   where
     n = length mat
     go k a b
@@ -37,6 +36,35 @@ gaussianElimination mat vec = go 0 mat vec
               
           in go (k + 1) a'' b''
 
+gaussianEliminationSer :: Matrix -> Vector -> (Matrix, Vector)
+gaussianEliminationSer mat vec = go 0 mat vec
+  where
+    n = length mat
+    go k a b
+      | k >= n = (a, b)
+      | otherwise =
+          let 
+              pivotRow = k + maxIndex (drop k (map (abs . (!! k)) a))
+              (a', b') = if pivotRow /= k
+                         then (swapRows k pivotRow a, swapElems k pivotRow b)
+                         else (a, b)
+              
+              pivot = (a' !! k) !! k
+              _ = if abs pivot < 1e-10
+                  then error "Matrix is singular"
+                  else ()
+
+              indices = [k+1..n-1]
+              results = 
+                  [ eliminateRow i k pivot (a' !! i) (a' !! k) (b' !! i) (b' !! k)
+                  | i <- indices ]
+              
+              (newRows, newB) = unzip results
+              a'' = take (k + 1) a' ++ newRows
+              b'' = take (k + 1) b' ++ newB
+          in go (k + 1) a'' b''
+
+
 eliminateRow :: Int -> Int -> Double -> Vector -> Vector -> Double -> Double -> (Vector, Double)
 eliminateRow i k pivot rowI pivotRow bi bk =
   let factor = (rowI !! k) / pivot
@@ -57,10 +85,15 @@ backSubstitution mat vec = go (n - 1) (replicate n 0)
           sol' = take i sol ++ [xi] ++ drop (i + 1) sol
       in go (i - 1) sol'
 
-solve :: Matrix -> Vector -> Vector
-solve mat vec = 
-  let (mat', vec') = gaussianElimination mat vec
+solvePar :: Matrix -> Vector -> Vector
+solvePar mat vec = 
+  let (mat', vec') = gaussianEliminationPar mat vec
   in backSubstitution mat' vec'
+
+solveSer :: Matrix -> Vector -> Vector
+solveSer mat vec =
+    let (mat', vec') = gaussianEliminationSer mat vec
+    in backSubstitution mat' vec'
 
 maxIndex :: [Double] -> Int
 maxIndex xs = snd $ foldl' (\(m, mi) (x, i) -> if x > m then (x, i) else (m, mi)) 
@@ -81,15 +114,19 @@ swapElems i j xs =
   in take i xs ++ [ej] ++ take (j - i - 1) (drop (i + 1) xs) ++ 
      [ei] ++ drop (j + 1) xs
 
-readMatrix :: FilePath -> IO (Matrix, Vector)
-readMatrix path = do
+readMatrixSize :: FilePath -> IO Int
+readMatrixSize path = do
   content <- readFile path
-  let (nStr:rows) = lines content
-      n = read nStr :: Int
-      parsed = map (map read . words) rows :: [[Double]]
-      a = map init parsed
-      b = map last parsed
-  return (a, b)
+  let n = read (head (lines content)) :: Int
+  return n
+
+generateMatrix :: Int -> IO (Matrix, Vector)
+generateMatrix n = do
+    a <- mapM (\_ -> generateRow n) [1..n]
+    b <- mapM (\_ -> randomRIO (-100, 100)) [1..n] 
+    return (a, b)
 
 
+generateRow :: Int -> IO [Double]
+generateRow n = mapM (\_ -> randomRIO (-100, 100)) [1..n]
 
