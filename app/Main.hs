@@ -1,6 +1,8 @@
 module Main (main) where
 
 import System.Environment (getArgs)
+import System.CPUTime
+import Text.Printf (printf)
 import MyLib
 
 main :: IO ()
@@ -16,7 +18,13 @@ main = do
   putStrLn "\nVector b:"
   print vec
   
+  start <- getCPUTime
   let solution = solve mat vec
+  end <- getCPUTime
+
+  let diff = fromIntegral (end - start) / (10^12) :: Double
+  printf "\nExecution time: %.6f sec\n" diff
+
   putStrLn "\nSolution x:"
   print solution
   
