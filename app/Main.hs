@@ -2,34 +2,37 @@ module Main (main) where
 
 import System.Environment (getArgs)
 import System.CPUTime
+import Control.DeepSeq (deepseq)
 import Text.Printf (printf)
 import MyLib
+import System.Random
 
 main :: IO ()
 main = do
-  args <- getArgs
-  let size = if null args then 4 else read (head args) :: Int
 
-  (mat, vec) <- readMatrix "input_matrix.txt"
-  
-  putStrLn "Solving system Ax = b"
-  putStrLn "Matrix A:"
-  mapM_ print mat
-  putStrLn "\nVector b:"
-  print vec
-  
-  start <- getCPUTime
-  let solution = solve mat vec
-  end <- getCPUTime
+  setStdGen (mkStdGen 42)
 
-  let diff = fromIntegral (end - start) / (10^12) :: Double
-  printf "\nExecution time: %.6f sec\n" diff
+  size <- readMatrixSize "input_matrix.txt"
+  printf "Matrix size read from file: %d\n" size
 
-  putStrLn "\nSolution x:"
-  print solution
+  (mat, vec) <- generateMatrix size
   
-  let result = map (\row -> sum $ zipWith (*) row solution) mat
-  putStrLn "\nVerification (Ax):"
-  print result
-  putStrLn "\nExpected (b):"
-  print vec
+  -- Measure time for parallel algorithm
+  startPar <- getCPUTime
+  let solutionPar = solvePar mat vec
+  solutionPar `deepseq` return ()
+  endPar <- getCPUTime
+
+
+  -- Measure time for sequential algorithm
+  -- startSeq <- getCPUTime
+  -- let solutionSeq = solveSeq mat vec
+  -- solutionSeq `deepseq` return ()
+  -- endSeq <- getCPUTime
+
+  let diffPar = fromIntegral (endPar - startPar) / (10^12) :: Double
+  printf "\nExecution time for parallel algorithm: %.6f\n" diffPar
+
+  -- let diffSeq = fromIntegral (endSeq - startSeq) / (10^12) :: Double
+  -- printf "Execution time for sequential algorithm: %.6f\n" diffSeq
+
