@@ -25,9 +25,9 @@ main = do
 
 
   -- Measure time for sequential algorithm
-  -- startSeq <- getCPUTime
-  -- let solutionSeq = solveSeq mat vec
-  -- solutionSeq `deepseq` return ()
+  -- startSer <- getCPUTime
+  -- let solutionSer = solveSer mat vec
+  -- solutionSer `deepseq` return ()
   -- endSeq <- getCPUTime
 
   let diffPar = fromIntegral (endPar - startPar) / (10^12) :: Double
