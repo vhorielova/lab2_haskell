@@ -3,3 +3,4 @@
 parallel_gaussian
 *.hi
 *.o
+dist-newstyle/

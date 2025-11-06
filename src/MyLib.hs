@@ -1,3 +1,5 @@
+module MyLib where
+
 import Control.Parallel.Strategies
 import Control.DeepSeq
 import Data.List (foldl')
@@ -89,25 +91,5 @@ readMatrix path = do
       b = map last parsed
   return (a, b)
 
-main :: IO ()
-main = do
-  args <- getArgs
-  let size = if null args then 4 else read (head args) :: Int
 
-  (mat, vec) <- readMatrix "input_matrix.txt"
-  
-  putStrLn "Solving system Ax = b"
-  putStrLn "Matrix A:"
-  mapM_ print mat
-  putStrLn "\nVector b:"
-  print vec
-  
-  let solution = solve mat vec
-  putStrLn "\nSolution x:"
-  print solution
-  
-  let result = map (\row -> sum $ zipWith (*) row solution) mat
-  putStrLn "\nVerification (Ax):"
-  print result
-  putStrLn "\nExpected (b):"
-  print vec
+
